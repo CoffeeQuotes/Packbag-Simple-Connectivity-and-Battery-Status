@@ -1,117 +1,153 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:battery/battery.dart';
+
+final Color richBlackFograColor = Color(0xff031927);
+final Color internantionalOrangeEngineeringColor = Color(0xffBA1200);
+final Color lightCornFlowerBlueColor = Color(0xff9DD1F1);
+final Color blueNCSColor = Color(0xff508AA8);
+final Color blueBeauColor = Color(0xffC8E0F4);
 
 void main() {
-  runApp(MyApp());
+  runApp(MaterialApp(
+    title: 'Battery And Connectivity Status',
+    theme: ThemeData(
+      primaryColor: richBlackFograColor,
+      visualDensity: VisualDensity.adaptivePlatformDensity,
+    ),
+    home: HomePage(
+      title: "Dashboard",
+    ),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+class HomePage extends StatefulWidget {
+  HomePage({this.title});
 
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  //
+  String _connectionStatus = 'Unknown';
+  IconData _connectionIcon;
+  String _batteryStatus = 'Unknown';
+  IconData _batteryIcon;
+  Color _connectionColor = Colors.deepOrange;
+  Color _batteryColor = Colors.deepOrange;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  // Streams
+  StreamSubscription<ConnectivityResult> _connSub;
+  StreamSubscription<BatteryState> _battSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _connSub = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult res) async {
+      setState(() {
+        switch (res) {
+          case ConnectivityResult.mobile:
+            _connectionStatus = 'Mobile Data';
+            _connectionIcon = Icons.sim_card;
+            _connectionColor = Colors.red;
+            break;
+
+          case ConnectivityResult.wifi:
+            _connectionStatus = 'Wi-Fi';
+            _connectionIcon = Icons.wifi;
+            _connectionColor = Colors.blue;
+            break;
+
+          case ConnectivityResult.none:
+            _connectionStatus = 'No Connection';
+            _connectionIcon = Icons.not_interested;
+            _connectionColor = Colors.black;
+            break;
+        }
+      });
+    });
+
+    _battSub = Battery().onBatteryStateChanged.listen((BatteryState res) async {
+      setState(() {
+        switch (res) {
+          case BatteryState.charging:
+            _batteryStatus = 'Charging';
+            _batteryIcon = Icons.battery_charging_full;
+            _batteryColor = Colors.blueAccent;
+            break;
+          case BatteryState.full:
+            _batteryStatus = 'Full';
+            _batteryIcon = Icons.battery_full;
+            _batteryColor = Colors.green;
+            break;
+          case BatteryState.discharging:
+            _batteryStatus = 'In Use';
+            _batteryIcon = Icons.battery_alert;
+            _batteryColor = Colors.redAccent;
+            break;
+        }
+      });
     });
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _connSub.cancel();
+    _battSub.cancel();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      backgroundColor: internantionalOrangeEngineeringColor,
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _connectionIcon,
+                color: _connectionColor,
+                size: 50.0,
+              ),
+              Text(
+                "Connection:\n$_connectionStatus",
+                style: TextStyle(
+                  color: _connectionColor,
+                  fontSize: 40.0,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Icon(
+                _batteryIcon,
+                color: _batteryColor,
+                size: 50.0,
+              ),
+              Text(
+                "Battery:\n$_batteryStatus",
+                style: TextStyle(
+                  color: _batteryColor,
+                  fontSize: 40.0,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
